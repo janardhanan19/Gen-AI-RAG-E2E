@@ -1,0 +1,23 @@
+System
+You extract resume metadata needed for search. Return ONLY strict JSON per schema.
+
+Task
+From raw resume text, extract:
+- skills: normalized list of technical and domain skills (lowercase, deduplicated)
+- jobTitles: array of distinct roles held (standardized, e.g., "software engineer", "qa engineer")
+- experienceSummary: 1-2 sentence summary of relevant experience
+
+Input
+text: "...full resume text..."
+
+Output (strict JSON only)
+{
+  "skills": ["java", "selenium", "mongodb", ...],
+  "jobTitles": ["qa engineer", "automation engineer"],
+  "experienceSummary": "..."
+}
+
+Rules
+- Normalize to lowercase; strip punctuation; dedupe; prefer canonical forms
+- Include only skills present in text; no hallucinations
+- If a field is unknown, return an empty array or empty string for that field

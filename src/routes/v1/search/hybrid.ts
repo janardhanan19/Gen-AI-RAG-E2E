@@ -1,0 +1,35 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { SearchService } from '../../../services/SearchService.js';
+
+const BodySchema = z.object({
+  query: z.string().min(1, 'query is required'),
+  topK: z.number().int().positive().max(100).optional(),
+  filters: z
+    .object({
+      skills: z.array(z.string()).optional(),
+      jobTitles: z.array(z.string()).optional(),
+      location: z.string().optional(),
+      company: z.string().optional(),
+    })
+    .optional(),
+});
+
+export const hybridRouter = Router();
+
+hybridRouter.post('/', async (req, res, next) => {
+  try {
+    const parsed = BodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      const err: any = new Error(parsed.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join('; '));
+      err.statusCode = 400;
+      err.code = 'VALIDATION_ERROR';
+      throw err;
+    }
+    const { query, topK, filters } = parsed.data;
+    const { bm25, vector, componentTimings } = await SearchService.hybridSearch({ query, topK, filters });
+    res.json({ bm25, vector, requestId: req.requestId, componentTimings });
+  } catch (err) {
+    next(err);
+  }
+});
